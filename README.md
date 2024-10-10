@@ -1,2 +1,2 @@
-# LOBnetwork
-Codebase for limit order book price prediction using deep learning. 
+# LOBnet Project for CSCI3370
+Codebase for deep learning enabled limit order book price prediction.
