@@ -71,12 +71,10 @@ class FI2010_Orderbook_Optimized(Dataset):
         data = df.to_numpy()
         T = data.shape[1]
 
-        # Generate windows with overlap percentage
         windows = []
         for start in range(0, T - self.window_size + 1, self.step_size):
             windows.append(data[:, start:start + self.window_size])
 
-        # Handle the last window if it doesn't fit the exact step size
         if (T - self.window_size) % self.step_size != 0:
             windows.append(data[:, -self.window_size:])
 
@@ -90,25 +88,25 @@ class FI2010_Orderbook_Optimized(Dataset):
 
 
 # Main Method to Test
-def main():
-    root_path = "../data/BenchmarkDatasets_csv"  
-    window_size = 100
-    overlap_percent = 25  # 25% overlap
+# def main():
+#     root_path = "../data/BenchmarkDatasets_csv"  
+#     window_size = 100
+#     overlap_percent = 25  # 25% overlap
 
-    dataset = FI2010_Orderbook_Optimized(
-        root_path=root_path,
-        venue="NoAuction",
-        normalization_type="Zscore",
-        split="Training",
-        window_size=window_size,
-        overlap_percent=overlap_percent,
-        num_workers=cpu_count(),
-        verbose=True,
-    )
+#     dataset = FI2010_Orderbook_Optimized(
+#         root_path=root_path,
+#         venue="NoAuction",
+#         normalization_type="Zscore",
+#         split="Training",
+#         window_size=window_size,
+#         overlap_percent=overlap_percent,
+#         num_workers=6,
+#         verbose=True,
+#     )
 
-    print(f"Dataset loaded with {len(dataset)} windows.")
-    print(f"Sample window shape: {dataset[0].shape}")
+#     print(f"Dataset loaded with {len(dataset)} windows.")
+#     print(f"Sample window shape: {dataset[0].shape}")
 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
