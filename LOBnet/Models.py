@@ -86,7 +86,7 @@ class DeepLOB_Network_v1(nn.Module):
         self.lstm1 = nn.LSTM(input_size=32*3, hidden_size=64, num_layers=1, batch_first=True)
         self.fc1 = nn.Linear(64, y_len)
 
-    def foward(self, x):
+    def forward(self, x):
         y = self.conv_block_3(self.conv_block_2(self.conv_block_1(x)))
         y = torch.cat(self.incep1(y), self.incep2(y), self.incep3(y), dim=1)
         y = y.permute(0,2,1,3)
