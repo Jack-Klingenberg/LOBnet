@@ -6,10 +6,11 @@ from torch import nn
 class DeepLOB_ConvolutionalBlock(nn.Module):
     def __init__(self, input_depth=1, output_depth=16, activation=nn.LeakyReLU, slope=.01):
         super().__init__()
+        self.slope = slope # slope for LeakyReLU
 
-        self.conv1 = nn.Conv2d(in_channels=input_depth, out_channels=output_depth, kernel_size=(1,2), stride=(1,2))
-        self.conv2 = nn.Conv2d(in_channels=input_depth, out_channels=output_depth, kernel_size=(4,1))
-        self.conv3 = nn.Conv2d(in_channels=input_depth, out_channels=output_depth, kernel_size=(4,1))
+        self.conv1 = nn.Conv2d(input_depth, output_depth, kernel_size=(1,2), stride=(1,2))
+        self.conv2 = nn.Conv2d(output_depth, output_depth, kernel_size=(4,1))
+        self.conv3 = nn.Conv2d(output_depth, output_depth, kernel_size=(4,1)) 
 
         self.bn1 = nn.BatchNorm2d(output_depth)
         self.bn2 = nn.BatchNorm2d(output_depth)
@@ -83,21 +84,24 @@ class DeepLOB_Network_v1(nn.Module):
         self.incep2 = DeepLOB_InceptionConvSubunit(kernel_size=(5,1))
         self.incep3 = DeepLOB_IncpetionPoolSubunut()
 
-        self.lstm1 = nn.LSTM(input_size=32*3, hidden_size=64, num_layers=1, batch_first=True)
+        self.lstm1 = nn.LSTM(input_size=96*5, hidden_size=64, num_layers=1, batch_first=True)
         self.fc1 = nn.Linear(64, y_len)
 
     def forward(self, x):
         y = self.conv_block_3(self.conv_block_2(self.conv_block_1(x)))
-        y = torch.cat(self.incep1(y), self.incep2(y), self.incep3(y), dim=1)
-        y = y.permute(0,2,1,3)
-        y = torch.reshape(y, (-1, y.shape[1], y.shape[2]))
-        y, _ = self.lstm1(y,(
-            torch.zeros(1,x.size(0),64).to(self.device),torch.zeros(1,x.size(0),64).to(self.device) 
-        ))
-        y = self.fc1(y[:,-1,:])
-
-        return torch.softmax(y, dim=1)
-
+        y = torch.cat((self.incep1(y), self.incep2(y), self.incep3(y)), dim=1)
+        y = y.permute(0, 2, 1, 3)  # [32, 82, 96, 5]
+        
+        # reshape to (batch_size, sequence_length, features)
+        batch_size = y.shape[0]
+        y = y.reshape(batch_size, y.shape[1], -1)  # combine last two dimensions
+        
+        h0 = torch.zeros(1, batch_size, 64).to(self.device)
+        c0 = torch.zeros(1, batch_size, 64).to(self.device)
+        
+        y, _ = self.lstm1(y, (h0, c0))
+        y = self.fc1(y[:, -1, :])
+        return y
 
 
 
