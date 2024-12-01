@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+import torch.nn.functional as F
 
 # Components for DeepLOB Model (https://arxiv.org/pdf/1808.03668) 
 # Parameters allow some customization while keeping the structure of the DeepLOB paper's model intact
@@ -138,3 +139,81 @@ class DeepLOB_Network_v2(nn.Module):
         y, _ = self.lstm1(y, (h0, c0))
         y = self.fc1(y[:, -1, :])
         return y
+"""
+CNN based feature extraction with a transformer encoder aimed at capturing 
+local patterns and long-range dependencies in LOB data.
+
+Architecture decisions:
+- Uses CNN for initial dimensionality reduction and feature extraction
+- For transformer, small d_model (32) and heads (4) to prevent overfitting (also dropout)
+""" 
+class TransformerLOB(nn.Module):
+    def __init__(self, y_len=3, device='cpu'):
+        super().__init__()
+        
+        self.input_dim = 40  
+        self.d_model = 32      
+        self.nhead = 4 
+        self.num_layers = 2 # number of transformer layers
+        self.dropout = 0.1 # slight dropout to help prevent overfitting
+        
+        # CNN reduces sequence length by half while learning useful features
+        self.conv_reduction = nn.Sequential(
+            nn.Conv1d(self.input_dim, 32, kernel_size=3, padding=1),
+            nn.BatchNorm1d(32), # improve training stability
+            nn.ReLU(),
+            nn.MaxPool1d(2) # reduce sequence length by 2
+        )
+        
+        self.input_projection = nn.Linear(32, self.d_model)
+        self.pos_encoder = PositionalEncoding(self.d_model, self.dropout)
+    
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=self.d_model,
+            nhead=self.nhead, 
+            dropout=self.dropout,
+            batch_first=True,
+            dim_feedforward=128    
+        )
+        
+        self.transformer_encoder = nn.TransformerEncoder(
+            encoder_layer,
+            num_layers=self.num_layers
+        )
+        
+        self.fc1 = nn.Linear(self.d_model, 64)  
+        self.fc2 = nn.Linear(64, y_len) 
+        
+    def forward(self, x):
+        x = x.squeeze(1) 
+        
+        x = x.transpose(1, 2) # (batch, channels, seq_len)
+        x = self.conv_reduction(x)
+        x = x.transpose(1, 2) # (batch, seq_len, features)
+        
+        x = self.input_projection(x)
+        x = self.pos_encoder(x)
+        x = self.transformer_encoder(x)
+        
+        x = x.mean(dim=1)
+        
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
+        
+        return x
+
+class PositionalEncoding(nn.Module):
+    def __init__(self, d_model, dropout=0.1, max_len=5000):
+        super().__init__()
+        self.dropout = nn.Dropout(p=dropout)
+
+        position = torch.arange(max_len).unsqueeze(1)
+        div_term = torch.exp(torch.arange(0, d_model, 2) * (-torch.log(torch.tensor(10000.0)) / d_model))
+        pe = torch.zeros(max_len, d_model)
+        pe[:, 0::2] = torch.sin(position * div_term)
+        pe[:, 1::2] = torch.cos(position * div_term)
+        self.register_buffer('pe', pe)
+
+    def forward(self, x):
+        x = x + self.pe[:x.size(1)]
+        return self.dropout(x)
