@@ -76,7 +76,7 @@ class FI2010_Orderbook_Optimized(Dataset):
         return all_windows, labels, file_mapping
 
     def _process_file(self, file_path):
-        data = pd.read_csv(file_path, header=None, nrows=40).to_numpy()
+        data = pd.read_csv(file_path, header=None).to_numpy()
         features = data[0:40]
         labels = data[-5:]
 
@@ -130,7 +130,7 @@ class CustomSubsetDataset(Dataset):
 
 # Main Method to Test
 def main():
-    root_path = "../data/BenchmarkDatasets_csv/BenchmarkDatasets/BenchmarkDatasets/NoAuction/1.NoAuction_Zscore/NoAuction_Zscore_Training"  
+    root_path = "/home/jackklingenberg/Projects/LOBnet/data/pruned_auc_zscore_training"  
     window_size = 100
     overlap_percent = 25  # 25% overlap
 
