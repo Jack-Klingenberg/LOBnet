@@ -253,6 +253,51 @@ class DeepLOB_Network_v2(nn.Module):
         y, _ = self.lstm1(y, (h0, c0))
         y = self.fc1(y[:, -1, :])
         return y
+
+# Multiheaded attention before LSTM with dropout
+class DeepLOB_Network_v3(nn.Module):
+    def __init__(self, y_len, device):
+        super().__init__()
+        self.device = device
+        self.conv_block_1 = DeepLOB_ConvolutionalBlock(input_depth=1, output_depth=16)
+        self.conv_block_2 = DeepLOB_ConvolutionalBlock(input_depth=16, output_depth=16)
+        self.conv_block_3 = DeepLOB_ConvolutionalBlock(input_depth=16, output_depth=16)
+
+        self.incep1 = DeepLOB_InceptionConvSubunit(kernel_size=(3,1))
+        self.incep2 = DeepLOB_InceptionConvSubunit(kernel_size=(5,1))
+        self.incep3 = DeepLOB_IncpetionPoolSubunut()
+
+        self.attention = nn.MultiheadAttention(embed_dim=96*5, num_heads=8, batch_first=True)
+        self.lstm1 = nn.LSTM(input_size=96*5, hidden_size=64, num_layers=1, batch_first=True)
+        self.fc1 = nn.Linear(64, y_len)
+
+        self.dropout_conv = nn.Dropout(0.2)  # After convolutional blocks
+        self.dropout_attention = nn.Dropout(0.1)  # After attention
+        self.dropout_lstm = nn.Dropout(0.15)  # After LSTM
+
+    def forward(self, x):
+        y = self.conv_block_3(self.conv_block_2(self.conv_block_1(x)))
+        y = self.dropout_conv(y)
+        y = torch.cat((self.incep1(y), self.incep2(y), self.incep3(y)), dim=1)
+        y = y.permute(0, 2, 1, 3)  # [32, 82, 96, 5]
+        
+        # reshape to (batch_size, sequence_length, features)
+        batch_size = y.shape[0]
+        y = y.reshape(batch_size, y.shape[1], -1)  # combine last two dimensions
+        
+        y, _ = self.attention(y, y, y)
+        y = self.dropout_attention(y)
+
+        h0 = torch.zeros(1, batch_size, 64).to(self.device)
+        c0 = torch.zeros(1, batch_size, 64).to(self.device)
+        
+        y, _ = self.lstm1(y, (h0, c0))
+        y = self.dropout_lstm(y)
+
+        y = self.fc1(y[:, -1, :])
+        return y
+
+
 """
 CNN based feature extraction with a transformer encoder aimed at capturing 
 local patterns and long-range dependencies in LOB data.
