@@ -313,10 +313,13 @@ class TransformerLOB(nn.Module):
         self.input_dim = 40  
         self.d_model = 32      
         self.nhead = 4 
-        self.num_layers = 2 # number of transformer layers
-        self.dropout = 0.1 # slight dropout to help prevent overfitting
+        self.num_layers = 1 # number of transformer layers
+        self.dropout = 0.2 # slight dropout to help prevent overfitting
         
         # CNN reduces sequence length by half while learning useful features
+        self.conv = nn.Sequential(
+            
+        )
         self.conv_reduction = nn.Sequential(
             nn.Conv1d(self.input_dim, 32, kernel_size=3, padding=1),
             nn.BatchNorm1d(32), # improve training stability
