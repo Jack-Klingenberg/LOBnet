@@ -314,19 +314,18 @@ class TransformerLOB(nn.Module):
         
         self.input_dim = 40  
         self.d_model = 32      
-        self.nhead = 4 
-        self.num_layers = 1 # number of transformer layers
-        self.dropout = 0.2 # slight dropout to help prevent overfitting
+        self.nhead = 2 
+        self.num_layers = 3 # number of transformer layers
+        self.dropout = 0.1 # slight dropout to help prevent overfitting
         
         # CNN reduces sequence length by half while learning useful features
-        self.conv = nn.Sequential(
-            
-        )
         self.conv_reduction = nn.Sequential(
             nn.Conv1d(self.input_dim, 32, kernel_size=3, padding=1),
-            nn.BatchNorm1d(32), # improve training stability
             nn.ReLU(),
-            nn.MaxPool1d(2) # reduce sequence length by 2
+            nn.MaxPool1d(2), # reduce sequence length by 2
+            PermuteLayer((0, 2, 1)),  # (batch, seq_len, 32)
+            nn.LayerNorm(32),  # Normalize across channels (C=32)
+            PermuteLayer((0, 2, 1))  # Back to (batch, 32, seq_len)
         )
         
         self.input_projection = nn.Linear(32, self.d_model)
@@ -337,7 +336,8 @@ class TransformerLOB(nn.Module):
             nhead=self.nhead, 
             dropout=self.dropout,
             batch_first=True,
-            dim_feedforward=128    
+            dim_feedforward=64,
+            norm_first=True
         )
         
         self.transformer_encoder = nn.TransformerEncoder(
@@ -365,6 +365,14 @@ class TransformerLOB(nn.Module):
         x = self.fc2(x)
         
         return x
+
+class PermuteLayer(nn.Module):
+    def __init__(self, dims):
+        super().__init__()
+        self.dims = dims
+
+    def forward(self, x):
+        return x.permute(self.dims) 
 
 class PositionalEncoding(nn.Module):
     def __init__(self, d_model, dropout=0.1, max_len=5000):
