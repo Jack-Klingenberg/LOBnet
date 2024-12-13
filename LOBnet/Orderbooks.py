@@ -96,8 +96,9 @@ class FI2010_Orderbook_Optimized(Dataset):
         return windows, price_movements, file_path
 
     def get_dataset_by_files(self, file_list):
+        targets = [os.path.join(self.data_path, f) for f in file_list]
         indices = [
-            i for i, file_name in enumerate(self.file_mapping) if file_name in file_list
+            i for i, file_name in enumerate(self.file_mapping) if file_name in targets
         ]
         subset_data = [self.data[i] for i in indices]
         subset_labels = [self.labels[i] for i in indices]
