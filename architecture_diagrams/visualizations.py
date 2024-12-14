@@ -16,20 +16,18 @@ def create_architecture_diagram(model_version):
 
     if model_version == 'v2':
         dot.node('input', 'Input\n(batch, 1, 100, 40)', style='filled', fillcolor=input_color)
-        dot.node('conv1', 'Conv Block 1\n(Conv2d + BatchNorm)', style='filled', fillcolor=conv_color)
-        dot.node('conv2', 'Conv Block 2\n(Conv2d + BatchNorm)', style='filled', fillcolor=conv_color)
-        dot.node('conv3', 'Conv Block 3\n(Conv2d + BatchNorm)', style='filled', fillcolor=conv_color)
+        dot.node('conv1', 'Conv Block 1\n3 x (Conv2d + BatchNorm)\n1 x (dropout, rate=0.2)', style='filled', fillcolor=conv_color)
+        dot.node('conv2', 'Conv Block 2\n3 x (Conv2d + BatchNorm)\n1 x (dropout, rate=0.2)', style='filled', fillcolor=conv_color)
+        dot.node('conv3', 'Conv Block 3\n3 x (Conv2d + BatchNorm)\n1 x (dropout, rate=0.2)', style='filled', fillcolor=conv_color)
         dot.node('incep', 'Inception Blocks\n(3 Paths: Conv + Pool)', style='filled', fillcolor=incep_color)
-        dot.node('attention', 'Multihead Attention\n(8 Heads)', style='filled', fillcolor=attention_color)
         dot.node('lstm', 'LSTM\n(1 layer, hidden=64)', style='filled', fillcolor=lstm_color)
-        dot.node('fc', 'Fully Connected\n(Classification)', style='filled', fillcolor=output_color)
+        dot.node('fc', 'Fully Connected\n(64 -> 32 -> Output)', style='filled', fillcolor=output_color)
 
         dot.edge('input', 'conv1', penwidth='1.5')
         dot.edge('conv1', 'conv2', penwidth='1.5')
         dot.edge('conv2', 'conv3', penwidth='1.5')
         dot.edge('conv3', 'incep', penwidth='1.5')
-        dot.edge('incep', 'attention', penwidth='1.5')
-        dot.edge('attention', 'lstm', penwidth='1.5')
+        dot.edge('incep', 'lstm', penwidth='1.5')
         dot.edge('lstm', 'fc', penwidth='1.5')
 
     elif model_version == 'transformer':
@@ -39,7 +37,7 @@ def create_architecture_diagram(model_version):
         dot.node('pos', 'Positional Encoding', style='filled', fillcolor=attention_color)
         dot.node('trans', 'Transformer Encoder\n(3 layers, d_model=32)', style='filled', fillcolor=trans_color)
         dot.node('fc1', 'Fully Connected\n(ReLU, hidden=64)', style='filled', fillcolor=lstm_color)
-        dot.node('fc2', 'Fully Connected\n(Output Layer)', style='filled', fillcolor=output_color)
+        dot.node('fc2', 'Fully Connected\n(Output Layer, 64 -> 3)', style='filled', fillcolor=output_color)
 
         dot.edge('input', 'conv', penwidth='1.5')
         dot.edge('conv', 'input_proj', penwidth='1.5')
@@ -50,12 +48,12 @@ def create_architecture_diagram(model_version):
     
     elif model_version == 'baseline':
         dot.node('input', 'Input\n(batch, 1, 100, 40)', style='filled', fillcolor=input_color)
-        dot.node('conv1', 'Conv Block 1\n(Conv2d + BatchNorm + ReLU)', style='filled', fillcolor=conv_color)
-        dot.node('conv2', 'Conv Block 2\n(Conv2d + BatchNorm + Tanh)', style='filled', fillcolor=conv_color)
-        dot.node('conv3', 'Conv Block 3\n(Conv2d + BatchNorm + ReLU)', style='filled', fillcolor=conv_color)
+        dot.node('conv1', 'Conv Block 1\n3 x (Conv2d + BatchNorm + ReLU)', style='filled', fillcolor=conv_color)
+        dot.node('conv2', 'Conv Block 2\n3 x (Conv2d + BatchNorm + Tanh)', style='filled', fillcolor=conv_color)
+        dot.node('conv3', 'Conv Block 3\n3 x (Conv2d + BatchNorm + ReLU)', style='filled', fillcolor=conv_color)
         dot.node('incep', 'Inception Blocks\n(3 Paths: Conv + Pool)', style='filled', fillcolor=incep_color)
         dot.node('lstm', 'LSTM\n(1 layer, hidden=64)', style='filled', fillcolor=lstm_color)
-        dot.node('fc', 'Fully Connected\n(Classification)', style='filled', fillcolor=output_color)
+        dot.node('fc', 'Fully Connected\n(64 -> Output)', style='filled', fillcolor=output_color)
 
         dot.edge('input', 'conv1', penwidth='1.5')
         dot.edge('conv1', 'conv2', penwidth='1.5')
@@ -68,5 +66,6 @@ def create_architecture_diagram(model_version):
     dot.render(f"DeepLOB_{model_version}_architecture", format="png", cleanup=True)
 
 if __name__ == "__main__":
-    print('running')
     create_architecture_diagram('transformer')
+    create_architecture_diagram('baseline')
+    create_architecture_diagram('v2')
