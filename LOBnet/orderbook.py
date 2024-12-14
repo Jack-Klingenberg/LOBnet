@@ -130,29 +130,29 @@ class CustomSubsetDataset(Dataset):
 
 
 # Main Method to Test
-def main():
-    root_path = "/home/jackklingenberg/Projects/LOBnet/data/pruned_auc_zscore_training"  
-    window_size = 100
-    overlap_percent = 25  # 25% overlap
+# def main():
+#     root_path = "/home/jackklingenberg/Projects/LOBnet/data/pruned_auc_zscore_training"  
+#     window_size = 100
+#     overlap_percent = 25  # 25% overlap
 
-    dataset = FI2010_Orderbook_Optimized(
-        root_path=root_path,
-        window_size=window_size,
-        overlap_percent=overlap_percent,
-        num_workers=9,
-        verbose=True,
-    )
+#     dataset = FI2010_Orderbook_Optimized(
+#         root_path=root_path,
+#         window_size=window_size,
+#         overlap_percent=overlap_percent,
+#         num_workers=9,
+#         verbose=True,
+#     )
 
-    print(f"Dataset loaded with {len(dataset)} windows.")
-    print(f"Sample window shape: {dataset[0][0].shape}")
-    print(f"Sample label shape: {dataset[0][1].shape}")
+#     print(f"Dataset loaded with {len(dataset)} windows.")
+#     print(f"Sample window shape: {dataset[0][0].shape}")
+#     print(f"Sample label shape: {dataset[0][1].shape}")
 
-    file_name = "Train_Dst_NoAuction_ZScore_CF_8.csv"
-    subset = dataset.get_dataset_by_files([os.path.join(root_path, file_name)])
+#     file_name = "Train_Dst_NoAuction_ZScore_CF_8.csv"
+#     subset = dataset.get_dataset_by_files([os.path.join(root_path, file_name)])
 
-    print(f"Subset dataset loaded with {len(subset)} windows from {file_name}.")
-    print(f"Sample window shape in subset: {subset[0][0].shape}")
-    print(f"Sample label shape in subset: {subset[0][1].shape}")
+#     print(f"Subset dataset loaded with {len(subset)} windows from {file_name}.")
+#     print(f"Sample window shape in subset: {subset[0][0].shape}")
+#     print(f"Sample label shape in subset: {subset[0][1].shape}")
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
